@@ -14,12 +14,16 @@ using Serilog.Events;
 using System.Timers;
 using System.Data.SqlClient;
 using System.Configuration;
+using cdn_api;
 
 namespace AutomatyczneZatwierdzanieKorektService
 {
     public partial class AutomatycznePotwierdzanieKorektService : ServiceBase
     {
+        public static int IDSesjiXL = 0;
+        public static readonly Int32 APIVersion = 20231;
         private System.Timers.Timer timer = new System.Timers.Timer();
+        private readonly string database = ConfigurationManager.AppSettings["Database"];
         private readonly int serviceEndHour = int.Parse(ConfigurationManager.AppSettings["ServiceEndHour"]);
         private readonly int serviceStartHour = int.Parse(ConfigurationManager.AppSettings["ServiceStartHour"]);
         private readonly int checkTimeMin = int.Parse(ConfigurationManager.AppSettings["CheckTimeMin"]);
@@ -29,6 +33,7 @@ namespace AutomatyczneZatwierdzanieKorektService
         private Thread threadConfirm;
         private Thread threadTimer;
         private Corrections corrections;
+        private XLApi xlAPI;
         public AutomatycznePotwierdzanieKorektService()
         {
             InitializeComponent();
@@ -50,9 +55,12 @@ namespace AutomatyczneZatwierdzanieKorektService
 
             try
             {
+                corrections = new Corrections(connectionString);
+                xlAPI = new XLApi();
+                xlAPI.Login();
+
                 threadTimer = new Thread(Timer);
                 threadTimer.Start();
-                corrections = new Corrections(connectionString);
             }
             catch (Exception ex)
             {
@@ -65,6 +73,7 @@ namespace AutomatyczneZatwierdzanieKorektService
         {
             Log.Information("Zatrzymanie usługi");
             Log.CloseAndFlush();
+            xlAPI.Logout();
 
             timer.Stop();
             if ((threadTimer.ThreadState & System.Threading.ThreadState.Running) == System.Threading.ThreadState.Running) { threadTimer.Abort(); }
