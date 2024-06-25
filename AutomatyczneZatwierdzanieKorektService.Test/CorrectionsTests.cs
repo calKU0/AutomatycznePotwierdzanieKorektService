@@ -7,11 +7,16 @@ using System.Text;
 using System.Threading.Tasks;
 using AutomatyczneZatwierdzanieKorektService;
 using Xunit;
+using cdn_api;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
 
 namespace AutomatyczneZatwierdzanieKorektService.Test
 {
     public class CorrectionsTests
     {
+        public static int IDSesjiXL = 0;
+        public static readonly Int32 APIVersion = 20231;
+
         [Fact]
         public void GetCorrections_DataRowsShouldEqual()
         {
@@ -55,6 +60,51 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
 
             // Assert
             Assert.Equal(correctionsToUpdateCount, correctionsUpdated);
+        }
+
+        [Fact]
+        public void GeneratePM_ShouldGenerate()
+        {
+            XLApi xlApi = new XLApi();
+            xlApi.Login();
+
+            Corrections corrections = new Corrections(ConfigurationManager.ConnectionStrings["GaskaConnectionString"].ConnectionString);
+
+            //Arrange
+            int expected = 0;
+            DataTable correctionsToUpdate = new DataTable();
+            correctionsToUpdate.Columns.Add("TrN_GIDNumer");
+            correctionsToUpdate.Columns.Add("TrN_GIDTyp");
+            correctionsToUpdate.Columns.Add("TrN_DokumentObcy");
+            correctionsToUpdate.Columns.Add("Czy generowac dok. magazynowe", expected.GetType());
+
+            correctionsToUpdate.Rows.Add(1765549, 2042, "PAK-182/24/DETK", 1);
+            correctionsToUpdate.Rows.Add(1769032, 2042, "PAK-207/24/DETK", 0);
+            correctionsToUpdate.Rows.Add(1769132, 2041, "FSK-708/24/SPRK", 0);
+            correctionsToUpdate.Rows.Add(1769513, 2041, "FSK-712/24/SPRK", 0);
+
+            foreach (DataRow row in correctionsToUpdate.Rows)
+            {
+                if (Convert.ToBoolean(row["Czy generowac dok. magazynowe"]))
+                {
+                    expected += 1;
+                }
+            }
+
+            //Act
+            int actual = 0;
+            foreach (DataRow row in correctionsToUpdate.Rows)
+            {
+                if (Convert.ToBoolean(row["Czy generowac dok. magazynowe"]))
+                {
+                    int result = corrections.GeneratePM(row);
+                    actual += result == 0 ? 1 : result;
+                }
+            }
+
+            // Assert
+            Assert.Equal(expected, actual);
+            xlApi.Logout();
         }
     }
 }
