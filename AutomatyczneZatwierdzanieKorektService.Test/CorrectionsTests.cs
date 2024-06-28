@@ -23,7 +23,7 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
             Corrections corrections = new Corrections(ConfigurationManager.ConnectionStrings["GaskaConnectionString"].ConnectionString);
 
             // Arrange
-            int expected = 0; // Expected dataRows on todays day
+            int expected = 12; // Expected dataRows on todays day
 
             // Act
             int actual = corrections.GetCorrections().Rows.Count;
@@ -47,8 +47,11 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
         }
 
         [Fact]
-        public void ConfirmCorrections_ShouldUpdateDatabaseTable()
+        public void ConfirmCorrections_ShouldConfirmAndGeneratePM()
         {
+            XLApi xlApi = new XLApi();
+            xlApi.Login();
+
             Corrections corrections = new Corrections(ConfigurationManager.ConnectionStrings["GaskaConnectionString"].ConnectionString);
 
             // Arrange
@@ -60,6 +63,8 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
 
             // Assert
             Assert.Equal(correctionsToUpdateCount, correctionsUpdated);
+
+            xlApi.Logout();
         }
 
         [Fact]
@@ -78,7 +83,7 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
             correctionsToUpdate.Columns.Add("TrN_DokumentObcy");
             correctionsToUpdate.Columns.Add("Czy generowac dok. magazynowe", expected.GetType());
 
-            correctionsToUpdate.Rows.Add(1765549, 2042, "PAK-182/24/DETK", 1);
+            correctionsToUpdate.Rows.Add(1775365, 2042, "PAK-230/24/DETK", 1);
             correctionsToUpdate.Rows.Add(1769032, 2042, "PAK-207/24/DETK", 0);
             correctionsToUpdate.Rows.Add(1769132, 2041, "FSK-708/24/SPRK", 0);
             correctionsToUpdate.Rows.Add(1769513, 2041, "FSK-712/24/SPRK", 0);

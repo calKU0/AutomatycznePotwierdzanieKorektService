@@ -51,7 +51,7 @@ namespace AutomatyczneZatwierdzanieKorektService
                     connection.Open();
                     foreach (DataRow row in dt.Rows)
                     {
-                        string query = "UPDATE cdn.TraNag SET Trn_Stan = 3, TrN_OpeNumerZ = 589, TrN_OpeTypZ = 128, TrN_OpeFirmaZ = 449892, TrN_OpeLpZ = 0 WHERE Trn_GidNumer = @GidNumer and Trn_GidTyp = @GidTyp";
+                        string query = "UPDATE cdn.TraNag SET Trn_Stan = 3, TrN_OpeNumerZ = 412, TrN_OpeTypZ = 128, TrN_OpeFirmaZ = 449892, TrN_OpeLpZ = 0 WHERE Trn_GidNumer = @GidNumer and Trn_GidTyp = @GidTyp";
                         using (SqlCommand command = new SqlCommand(query, connection))
                         {
                             command.Parameters.AddWithValue("@GidNumer", row["TrN_GIDNumer"]);
@@ -62,20 +62,16 @@ namespace AutomatyczneZatwierdzanieKorektService
                                 rowsAffected = 0;
                                 Log.Warning("Nie udało się potwierdzić korekty " + row["TrN_DokumentObcy"]);
                             }
-                            count += rowsAffected;
-
-                            if (Convert.ToBoolean(row["Czy generowac dok. magazynowe"]))
+                            else
                             {
-                                int result = GeneratePM(row);
-                                if (result == 0)
+                                if (Convert.ToBoolean(row["Czy generowac dok. magazynowe"]))
                                 {
-                                    Log.Information($"Wygenerowano dokument magazynowy dla dokumentu {row["TrN_DokumentObcy"]}");
-                                }
-                                else
-                                {
-                                    Log.Warning($"Nie udało się wygenerować dokumentu magazynowego dla dokumentu {row["TrN_DokumentObcy"]}\nBłąd API: {result}");
+                                    int result = GeneratePM(row);
+                                    if (result == 0) { Log.Information($"Wygenerowano dokument magazynowy dla dokumentu {row["TrN_DokumentObcy"]}"); }
+                                    else { Log.Warning($"Nie udało się wygenerować dokumentu magazynowego dla dokumentu {row["TrN_DokumentObcy"]}\nBłąd API: {result}"); }
                                 }
                             }
+                            count += rowsAffected;
                         };
                     }
                     return count;
@@ -90,6 +86,8 @@ namespace AutomatyczneZatwierdzanieKorektService
 
         public int GeneratePM(DataRow row)
         {
+            int result = 0;
+
             try
             {
                 XLDokumentMagNagInfo_20231 PMInfo = new XLDokumentMagNagInfo_20231();
@@ -99,12 +97,27 @@ namespace AutomatyczneZatwierdzanieKorektService
                 PMInfo.ZrdTyp = Convert.ToInt32(row["TrN_GIDTyp"].ToString());
                 PMInfo.ZrdLp = 1;
                 PMInfo.ZrdFirma = 449892;
+                PMInfo.Magazyn = "DETAL";
 
-                return cdn_api.cdn_api.XLNowyDokumentMag(XLApi.IDSesjiXL, ref idPM, PMInfo);
+                result = cdn_api.cdn_api.XLNowyDokumentMag(XLApi.IDSesjiXL, ref idPM, PMInfo);
+                if (result == 0)
+                {
+                    XLZamkniecieDokumentuMagInfo_20231 PMCloseInfo = new XLZamkniecieDokumentuMagInfo_20231()
+                    {
+                        Wersja = XLApi.APIVersion,
+                        Tryb = 0,
+                        GidNumer = idPM,
+                        GidLp = 1,
+                        GidTyp = Convert.ToInt32(row["TrN_GIDTyp"].ToString()),
+                        GidFirma = 449892,
+                    };
+                    result += cdn_api.cdn_api.XLZamknijDokumentMag(idPM, PMCloseInfo);
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Błąd przy generowaniu dok mag {ex}");
                 Log.Error($"Błąd przy generowaniu dok Magazynowych dla dokumentu {row["TrN_DokumentObcy"]}\n{ex}");
                 return 999999999;
             }

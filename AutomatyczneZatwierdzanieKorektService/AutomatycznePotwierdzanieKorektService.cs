@@ -55,9 +55,12 @@ namespace AutomatyczneZatwierdzanieKorektService
 
             try
             {
-                corrections = new Corrections(connectionString);
                 xlAPI = new XLApi();
-                xlAPI.Login();
+                if (xlAPI.Login() == 0)
+                {
+                    Log.Information("Zalogowano do XLa");
+                }
+                corrections = new Corrections(connectionString);
 
                 threadTimer = new Thread(Timer);
                 threadTimer.Start();

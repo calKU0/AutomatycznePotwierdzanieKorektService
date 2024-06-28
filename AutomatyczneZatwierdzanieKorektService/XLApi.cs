@@ -12,7 +12,9 @@ namespace AutomatyczneZatwierdzanieKorektService
     public class XLApi
     {
         public static readonly Int32 APIVersion = 20231;
-        public readonly string database = ConfigurationManager.AppSettings["Database"];
+        private readonly string database = ConfigurationManager.AppSettings["Database"];
+        private readonly string XLLogin = ConfigurationManager.AppSettings["XLLogin"];
+        private readonly string XLHaslo = ConfigurationManager.AppSettings["XLPassword"];
         public static int IDSesjiXL;
         public XLApi()
         {
@@ -25,10 +27,14 @@ namespace AutomatyczneZatwierdzanieKorektService
                 CheckApiVersion(APIVersion);
 
                 XLLoginInfo_20231 loginInfo = new XLLoginInfo_20231();
-                loginInfo.ProgramID = "Autoamtyczne Potwierdzanie Korekt";
+                loginInfo.ProgramID = "Automatyczne Potwierdzanie Korekt";
                 loginInfo.Winieta = -1;
                 loginInfo.Wersja = APIVersion;
                 loginInfo.Baza = database;
+                loginInfo.OpeIdent = XLLogin;
+                loginInfo.OpeHaslo = XLHaslo;
+                loginInfo.TrybWsadowy = 1;
+                loginInfo.TrybNaprawy = 0;
 
                 int wynik_XLLogin = cdn_api.cdn_api.XLLogin(loginInfo, ref IDSesjiXL);
 
