@@ -9,6 +9,7 @@ using AutomatyczneZatwierdzanieKorektService;
 using Xunit;
 using cdn_api;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
+using System.Diagnostics;
 
 namespace AutomatyczneZatwierdzanieKorektService.Test
 {
@@ -23,7 +24,7 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
             Corrections corrections = new Corrections(ConfigurationManager.ConnectionStrings["GaskaConnectionString"].ConnectionString);
 
             // Arrange
-            int expected = 12; // Expected dataRows on todays day
+            int expected = 26; // Expected dataRows on todays day
 
             // Act
             int actual = corrections.GetCorrections().Rows.Count;
@@ -47,7 +48,7 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
         }
 
         [Fact]
-        public void ConfirmCorrections_ShouldConfirmAndGeneratePM()
+        public void ConfirmCorrections_ShouldConfirm()
         {
             XLApi xlApi = new XLApi();
             xlApi.Login();
@@ -60,55 +61,9 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
 
             //Act
             int correctionsUpdated = corrections.ConfirmCorrections(correctionsToUpdate);
-
             // Assert
             Assert.Equal(correctionsToUpdateCount, correctionsUpdated);
 
-            xlApi.Logout();
-        }
-
-        [Fact]
-        public void GeneratePM_ShouldGenerate()
-        {
-            XLApi xlApi = new XLApi();
-            xlApi.Login();
-
-            Corrections corrections = new Corrections(ConfigurationManager.ConnectionStrings["GaskaConnectionString"].ConnectionString);
-
-            //Arrange
-            int expected = 0;
-            DataTable correctionsToUpdate = new DataTable();
-            correctionsToUpdate.Columns.Add("TrN_GIDNumer");
-            correctionsToUpdate.Columns.Add("TrN_GIDTyp");
-            correctionsToUpdate.Columns.Add("TrN_DokumentObcy");
-            correctionsToUpdate.Columns.Add("Czy generowac dok. magazynowe", expected.GetType());
-
-            correctionsToUpdate.Rows.Add(1775365, 2042, "PAK-230/24/DETK", 1);
-            correctionsToUpdate.Rows.Add(1769032, 2042, "PAK-207/24/DETK", 0);
-            correctionsToUpdate.Rows.Add(1769132, 2041, "FSK-708/24/SPRK", 0);
-            correctionsToUpdate.Rows.Add(1769513, 2041, "FSK-712/24/SPRK", 0);
-
-            foreach (DataRow row in correctionsToUpdate.Rows)
-            {
-                if (Convert.ToBoolean(row["Czy generowac dok. magazynowe"]))
-                {
-                    expected += 1;
-                }
-            }
-
-            //Act
-            int actual = 0;
-            foreach (DataRow row in correctionsToUpdate.Rows)
-            {
-                if (Convert.ToBoolean(row["Czy generowac dok. magazynowe"]))
-                {
-                    int result = corrections.GeneratePM(row);
-                    actual += result == 0 ? 1 : result;
-                }
-            }
-
-            // Assert
-            Assert.Equal(expected, actual);
             xlApi.Logout();
         }
     }

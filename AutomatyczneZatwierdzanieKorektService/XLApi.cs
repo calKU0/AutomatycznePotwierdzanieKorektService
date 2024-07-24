@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,6 +17,7 @@ namespace AutomatyczneZatwierdzanieKorektService
         private readonly string XLLogin = ConfigurationManager.AppSettings["XLLogin"];
         private readonly string XLHaslo = ConfigurationManager.AppSettings["XLPassword"];
         public static int IDSesjiXL;
+        private int IdDoc;
         public XLApi()
         {
             
@@ -81,6 +83,64 @@ namespace AutomatyczneZatwierdzanieKorektService
             if (cdn_api.cdn_api.XLSprawdzWersje(ref APIVersion) != 0) // 0 api jest obsługiwane, -1 nie jest
             {
                 Log.Error("Obecna wersja API nie jest obsługiwana przez obecną wersję XL-a");
+            }
+        }
+
+        public int CloseDocument()
+        {
+            AutomatycznePotwierdzanieKorektService.AttachThreadToClarion(1);
+
+            int result = -1;
+            try
+            {
+                XLZamkniecieDokumentuInfo_20231 xlZamDoc = new XLZamkniecieDokumentuInfo_20231();
+                xlZamDoc.Wersja = APIVersion;
+                xlZamDoc.Tryb = 0; // Confirmation          
+
+                result = cdn_api.cdn_api.XLZamknijDokument(IdDoc, xlZamDoc);
+
+                if (result != 0)
+                {
+                    Log.Error($"Błąd API przy zamykaniu dokumentu{Environment.NewLine}Kod błędu: {result}");
+                }
+                Log.Information($"Zamykam dokument GIDNumer: {IdDoc}");
+                result = result == 0 ? 1 : result;
+                return result;
+            }
+            catch(Exception ex)
+            {
+                Log.Error($"Błąd podczas zamykania dokumentu: {IdDoc}{Environment.NewLine}{ex}");
+                return result;
+            }
+        }
+
+        public int OpenDocument(int gidNumber, int gidTyp)
+        {
+            AutomatycznePotwierdzanieKorektService.AttachThreadToClarion(1);
+
+            int result = -1;
+            try
+            {
+                XLOtwarcieNagInfo_20231 xlOtwDoc = new XLOtwarcieNagInfo_20231();
+                xlOtwDoc.Wersja = APIVersion;
+                xlOtwDoc.GIDNumer = gidNumber;
+                xlOtwDoc.GIDTyp = gidTyp;
+                xlOtwDoc.GIDFirma = 449892;
+                xlOtwDoc.GIDLp = 0;
+
+                result = cdn_api.cdn_api.XLOtworzDokument(IDSesjiXL, ref IdDoc, xlOtwDoc);
+
+                if (result != 0)
+                {
+                    Log.Error($"Błąd API przy otwieraniu dokumentu{Environment.NewLine}Kod błędu: {result}");
+                }
+                Log.Information($"Otwieram dokument GIDNumer: {IdDoc}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Błąd podczas otwierania dokumentu: {IdDoc}{Environment.NewLine}{ex}");
+                return result;
             }
         }
     }

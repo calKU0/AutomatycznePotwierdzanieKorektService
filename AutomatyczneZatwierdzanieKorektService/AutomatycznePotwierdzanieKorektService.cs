@@ -15,6 +15,7 @@ using System.Timers;
 using System.Data.SqlClient;
 using System.Configuration;
 using cdn_api;
+using System.Runtime.InteropServices;
 
 namespace AutomatyczneZatwierdzanieKorektService
 {
@@ -22,18 +23,19 @@ namespace AutomatyczneZatwierdzanieKorektService
     {
         public static int IDSesjiXL = 0;
         public static readonly Int32 APIVersion = 20231;
-        private System.Timers.Timer timer = new System.Timers.Timer();
-        private readonly string database = ConfigurationManager.AppSettings["Database"];
+        private readonly System.Timers.Timer timer = new System.Timers.Timer();
         private readonly int serviceEndHour = int.Parse(ConfigurationManager.AppSettings["ServiceEndHour"]);
         private readonly int serviceStartHour = int.Parse(ConfigurationManager.AppSettings["ServiceStartHour"]);
         private readonly int checkTimeMin = int.Parse(ConfigurationManager.AppSettings["CheckTimeMin"]);
         private readonly string connectionString = ConfigurationManager.ConnectionStrings["GaskaConnectionString"].ConnectionString;
-        private static AutoResetEvent autoResetEvent = new AutoResetEvent(false);
+        private readonly static AutoResetEvent autoResetEvent = new AutoResetEvent(false);
         private DataTable dtCorrections;
         private Thread threadConfirm;
         private Thread threadTimer;
         private Corrections corrections;
         private XLApi xlAPI;
+        [DllImport("ClaRUN.dll")]
+        public static extern void AttachThreadToClarion(int _flag);
         public AutomatycznePotwierdzanieKorektService()
         {
             InitializeComponent();
