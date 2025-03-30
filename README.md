@@ -14,7 +14,3 @@ A Windows Service that automatically confirms sales correction documents using t
 
 - **Frameworks:** .NET Framework
 - **Technologies:** C#, ERP XL API, Unit Testing, SQL Server
-
-## Live Demo
-
-[Visit Gamex Business Page](https://ourmemories.azurewebsites.net)
