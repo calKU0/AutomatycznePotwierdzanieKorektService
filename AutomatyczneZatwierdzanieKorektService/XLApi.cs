@@ -95,7 +95,7 @@ namespace AutomatyczneZatwierdzanieKorektService
             {
                 XLZamkniecieDokumentuInfo_20231 xlZamDoc = new XLZamkniecieDokumentuInfo_20231();
                 xlZamDoc.Wersja = APIVersion;
-                xlZamDoc.Tryb = 0; // Confirmation          
+                xlZamDoc.Tryb = 1; // Confirmation          
 
                 result = cdn_api.cdn_api.XLZamknijDokument(IdDoc, xlZamDoc);
 
@@ -103,7 +103,10 @@ namespace AutomatyczneZatwierdzanieKorektService
                 {
                     Log.Error($"Błąd API przy zamykaniu dokumentu{Environment.NewLine}Kod błędu: {result}");
                 }
-                Log.Information($"Zamykam dokument GIDNumer: {IdDoc}");
+                else
+                {
+                    Log.Information($"Zamykam dokument GIDNumer: {IdDoc}");
+                }
                 result = result == 0 ? 1 : result;
                 return result;
             }
@@ -127,6 +130,8 @@ namespace AutomatyczneZatwierdzanieKorektService
                 xlOtwDoc.GIDTyp = gidTyp;
                 xlOtwDoc.GIDFirma = 449892;
                 xlOtwDoc.GIDLp = 0;
+                xlOtwDoc.Tryb = 2;
+                xlOtwDoc.TrybNaprawy = 2;
 
                 result = cdn_api.cdn_api.XLOtworzDokument(IDSesjiXL, ref IdDoc, xlOtwDoc);
 
@@ -134,7 +139,79 @@ namespace AutomatyczneZatwierdzanieKorektService
                 {
                     Log.Error($"Błąd API przy otwieraniu dokumentu{Environment.NewLine}Kod błędu: {result}");
                 }
-                Log.Information($"Otwieram dokument GIDNumer: {IdDoc}");
+                else
+                {
+                    Log.Information($"Otwieram dokument GIDNumer: {IdDoc}");
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Błąd podczas otwierania dokumentu: {IdDoc}{Environment.NewLine}{ex}");
+                return result;
+            }
+        }
+
+        public int CreateAWD(int RLSgidNumer, int RLSgidTyp)
+        {
+            AutomatycznePotwierdzanieKorektService.AttachThreadToClarion(1);
+
+            int result = -1;
+            try
+            {
+                XLDokumentMagNagInfo_20231 xlDokMag = new XLDokumentMagNagInfo_20231();
+                xlDokMag.Wersja = APIVersion;
+                xlDokMag.ZrdNumer = RLSgidNumer;
+                xlDokMag.ZrdTyp = RLSgidTyp;
+                xlDokMag.ZrdFirma = 449892;
+                xlDokMag.ZrdLp = 0;
+                xlDokMag.Tryb = 2;
+                xlDokMag.Typ = 1093;
+
+                result = cdn_api.cdn_api.XLNowyDokumentMag(IDSesjiXL, ref IdDoc, xlDokMag);
+
+                if (result != 0)
+                {
+                    Log.Error($"Błąd API przy otwieraniu dokumentu{Environment.NewLine}Kod błędu: {result}");
+                }
+                else
+                {
+                    Log.Information($"Otwieram dokument GIDNumer: {IdDoc}");
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Błąd podczas otwierania dokumentu: {IdDoc}{Environment.NewLine}{ex}");
+                return result;
+            }
+        }
+
+        public int AddElements(int twrGid)
+        {
+            AutomatycznePotwierdzanieKorektService.AttachThreadToClarion(1);
+
+            int result = -1;
+            try
+            {
+                XLDokumentMagElemInfo_20231 xlDokMag = new XLDokumentMagElemInfo_20231();
+                xlDokMag.Wersja = APIVersion;
+                xlDokMag.Ilosc = "1";
+                xlDokMag.TwrNumer = twrGid;
+
+                result = cdn_api.cdn_api.XLDodajPozycjeMag(IdDoc, xlDokMag);
+
+                if (result != 0)
+                {
+                    Log.Error($"Błąd API przy otwieraniu dokumentu{Environment.NewLine}Kod błędu: {result}");
+                }
+                else
+                {
+                    Log.Information($"Otwieram dokument GIDNumer: {IdDoc}");
+                }
+
                 return result;
             }
             catch (Exception ex)

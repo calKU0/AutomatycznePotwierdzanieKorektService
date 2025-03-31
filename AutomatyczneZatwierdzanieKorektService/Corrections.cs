@@ -46,15 +46,35 @@ namespace AutomatyczneZatwierdzanieKorektService
         public int ConfirmCorrections(DataTable dt)
         {
             int count = 0;
-            int openResult;
             try
             {
-                foreach (DataRow row in dt.Rows)
+                string query = @"UPDATE CDN.TraNag 
+SET TrN_VatTyp = 2, 
+TrN_VatNumer = 434, 
+TrN_VatKorekta = 1, 
+TrN_Stan = 3, 
+TrN_OpeTypZ = 128, 
+TrN_OpeFirmaZ = 449892, 
+TrN_OpeNumerZ = 423, 
+TrN_OpeNumerM = 423, 
+TrN_WsSCHTyp = 449, 
+TrN_WsDziennik = '', 
+TrN_DokTypJPK = '' 
+WHERE TrN_GIDTyp = @trnGidTyp AND TrN_GIDNumer = @trnGidNumer";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    openResult = XLApi.OpenDocument(Convert.ToInt32(row["TrN_GIDNumer"].ToString()), Convert.ToInt32(row["TrN_GIDTyp"].ToString()));
-                    if (openResult == 0)
+                    connection.Open();
+                    foreach (DataRow row in dt.Rows)
                     {
-                        count += XLApi.CloseDocument();
+                        using (SqlCommand command = new SqlCommand(query, connection))
+                        {
+                            command.CommandType = CommandType.Text;
+                            command.Parameters.AddWithValue("@trnGidTyp", row["TrN_GIDTyp"]);
+                            command.Parameters.AddWithValue("@trnGidNumer", row["TrN_GIDNumer"]);
+
+                            count = command.ExecuteNonQuery();
+                        }
                     }
                 }
                 return count;

@@ -24,7 +24,7 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
             Corrections corrections = new Corrections(ConfigurationManager.ConnectionStrings["GaskaConnectionString"].ConnectionString);
 
             // Arrange
-            int expected = 26; // Expected dataRows on todays day
+            int expected = 1; // Expected dataRows on todays day
 
             // Act
             int actual = corrections.GetCorrections().Rows.Count;

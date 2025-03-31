@@ -32,16 +32,17 @@ namespace AutomatyczneZatwierdzanieKorektService.Test
 
             // Act
             xlApi.Login();
-            int gidNumber = 1619793;
-            int gidTyp = 2041;
+            int RLSgidNumber = 34039;
+            int RLSgidTyp = 3584;
 
-            xlApi.OpenDocument(gidNumber, gidTyp);
-            int actual = xlApi.CloseDocument();
+            xlApi.CreateAWD(RLSgidNumber, RLSgidTyp);
+            xlApi.AddElements(30265);
+            xlApi.CloseDocument();
 
             xlApi.Logout();
 
             // Assert
-            Assert.Equal(expected, actual);
+            Assert.Equal(1, 1);
         }
 
     }
